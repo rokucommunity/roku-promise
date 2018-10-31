@@ -1,14 +1,41 @@
-function createPromiseFromTask(taskName as string, fields = invalid as object, signalField = "output" as string) as object
-    id = Str(Rnd(0))
+function createTaskPromise(taskName as string, fields = invalid as object, signalField = "output" as string) as object
     task = CreateObject("roSGNode", taskName)
-    task.observeField(signalField, "taskPromiseCallbackHandler")
-    if fields <> invalid
-        for each key in fields
-           task[key] = fields[key]
-        end for
-    end if
-    task.id = id
+    if fields <> invalid then task.setFields(fields)
+    promise = __createPromiseFromNode(task, signalField)
     task.control = "run"
+    return promise
+end function
+
+function createObservablePromise(signalField as string, fields = invalid as object) as object
+    node = CreateObject("roSGNode", "ContentNode")
+    if fields <> invalid then node.addFields(fields)
+    node.addField(signalField, "assocarray", false)
+    promise = __createPromiseFromNode(node, signalField)
+    return promise
+end function
+
+function createManualPromise()
+    promise = __createPromise()
+    promise.resolve = sub(val)
+        m.context[m.id + "_callback"](val)
+        m.complete = true
+    end sub
+    return promise
+end function
+
+'---------------------------------------------------------------------
+' Everything below here is private and should not be called directly.
+'---------------------------------------------------------------------
+function __createPromiseFromNode(node as object, signalField as string) as object
+    promise = __createPromise()
+    node.id = promise.id
+    node.observeField(signalField, "__nodePromiseResolvedHandler")
+    promise.node = node
+    return promise
+end function
+
+function __createPromise() as object
+    id = strI(rnd(2147483647), 36)
     promise = {
         then: function(callback as function)
            m.context[m.id + "_callback"] = callback
@@ -16,84 +43,25 @@ function createPromiseFromTask(taskName as string, fields = invalid as object, s
     }
     promise.context = m
     promise.id = id
-    promise.task = task
+    promise.complete = false
     m[id] = promise
     return promise
 end function
 
-'-----------------------------------------------------------
-' Don't call this directly ever - it is only used internally
-' to support the promise callback functionality.
-'-----------------------------------------------------------
-function taskPromiseCallbackHandler(e as object)
-    task = e.getRoSGNode()
-    id = task.id
+sub __nodePromiseResolvedHandler(e as object)
+    signalField = e.getField()
+    node = e.getRoSGNode()
+    id = node.id
     promise = m[id]
-    promise.context[id + "_callback"](promise.task)
-    'cleanup circular references
+    promise.context[id + "_callback"](promise.node)
+    promise.complete = true
+
+    'clean up properly properly
     if promise.suppressDispose = invalid
-        promise.context = invalid
-        promise.task = invalid
-        m[id] = invalid
-        m[id + "_callback"] = invalid
+        node.unobserveField(signalField)
+        promise.delete("context")
+        promise.delete("node")
+        m.delete(id + "_callback")
+        m.delete(id)
     end if
-end function
-
-
-
-
-
-
-
-
-
-
-'-----------------------------------------------------------
-' NOTE: I dont actually use this often. It was more of an
-' academic exercise for me to see if it could be done.
-' That said, it uses the same techiques as the above Promise
-' stuff so it should be solid, but has not been put through
-' as much real-world stress.
-'-----------------------------------------------------------
-function whenAllPromisesComplete(arrayOfPromises as object)
-    id = Str(Rnd(0))
-    for i=0 to arrayOfPromises.Count() - 1
-        promise = arrayOfPromises[i]
-        promise.masterPromiseId = id
-        promise.then(function(task)
-            id = task.id
-            promise = m[id]
-            m[promise.masterPromiseId].complete(promise)
-            promise.suppressDispose = true
-        end function)
-    end for
-    masterPromise = {
-        then: function(callback as function)
-            m.context[m.id + "_callback"] = callback
-        end function,
-        complete: function(promise)
-            mp = m
-            mp.pendingPromiseCount = mp.pendingPromiseCount - 1
-            if mp.pendingPromiseCount = 0
-                mp.context[mp.id + "_callback"](mp.promises)
-                for i=0 to mp.promises.Count() - 1
-                    promise = mp.promises[i]
-                    promise.context = invalid
-                    promise.task = invalid
-                    mp.context[promise.id] = invalid
-                    mp.context[promise.id + "_callback"] = invalid
-                end for
-                mp.context[mp.id] = invalid
-                mp.context[mp.id + "_callback"] = invalid
-                mp.promises = invalid
-                mp.context = invalid
-            end if
-        end function
-    }
-    masterPromise.id = id
-    masterPromise.context = m
-    masterPromise.promises = arrayOfPromises
-    masterPromise.pendingPromiseCount = arrayOfPromises.Count()
-    m[id] = masterPromise
-    return masterPromise
-end function
+end sub
