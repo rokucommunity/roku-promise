@@ -6,6 +6,12 @@ function createTaskPromise(taskName as string, fields = invalid as object, signa
     return promise
 end function
 
+function createAnimationPromise(animation as object) as object
+    promise = __createPromiseFromAnimation(animation)
+    animation.control = "start"
+    return promise
+end function
+
 function createObservablePromise(signalField as string, fields = invalid as object) as object
     node = CreateObject("roSGNode", "ContentNode")
     if fields <> invalid then node.addFields(fields)
@@ -33,6 +39,15 @@ function __createPromiseFromNode(node as object, signalField as string) as objec
     promise.node = node
     return promise
 end function
+
+function __createPromiseFromAnimation(animation as object) as object
+    promise = __createPromise()
+    animation.id = promise.id
+    animation.observeField("state", "__animationPromiseResolvedHandler")
+    promise.animation = animation
+    return promise
+end function
+
 
 function __createPromise() as object
     id = strI(rnd(2147483647), 36)
@@ -63,5 +78,27 @@ sub __nodePromiseResolvedHandler(e as object)
         promise.delete("node")
         m.delete(id + "_callback")
         m.delete(id)
+    end if
+end sub
+
+sub __animationPromiseResolvedHandler(e as object)
+    
+    signalField = e.getField()
+    animation = e.getRoSGNode()
+    Debug("__animationPromiseResolvedHandler {0}", animation.state)
+    if(animation.state = "stopped")
+      id = animation.id
+      promise = m[id]
+      promise.context[id + "_callback"](promise.animation)
+      promise.complete = true
+
+      'clean up properly properly
+      if promise.suppressDispose = invalid
+        animation.unobserveField(signalField)
+        promise.delete("context")
+        promise.delete("node")
+        m.delete(id + "_callback")
+        m.delete(id)
+      end if
     end if
 end sub
