@@ -85,7 +85,7 @@ sub __animationPromiseResolvedHandler(e as object)
     
     signalField = e.getField()
     animation = e.getRoSGNode()
-    Debug("__animationPromiseResolvedHandler {0}", animation.state)
+    
     if(animation.state = "stopped")
       id = animation.id
       promise = m[id]
