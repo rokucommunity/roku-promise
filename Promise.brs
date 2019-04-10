@@ -1,35 +1,37 @@
-function createTaskPromise(taskName as string, fields = invalid as object, signalField = "output" as string) as object
+function createTaskPromise(taskName as string, returnSignalFieldValue = true as boolean, fields = invalid as object, signalField = "output" as string) as object
     task = CreateObject("roSGNode", taskName)
     if fields <> invalid then task.setFields(fields)
     promise = __createPromiseFromNode(task, signalField)
+    promise.returnSignalFieldValue = returnSignalFieldValue
     task.control = "run"
     return promise
 end function
 
-function createObservablePromise(signalFieldType = "assocarray" as string, fields = invalid as object, signalField = "output" as string) as object
+function createObservablePromise(signalFieldType = "assocarray" as string, returnSignalFieldValue = true as boolean, fields = invalid as object, signalField = "output" as string) as object
     node = CreateObject("roSGNode", "Node")
     if fields <> invalid then node.addFields(fields)
     node.addField(signalField, signalFieldType, false)
     promise = __createPromiseFromNode(node, signalField)
+    promise.returnSignalFieldValue = returnSignalFieldValue
     return promise
 end function
 
 function createManualPromise() as object
     promise = __createPromise()
-    promise.resolve = sub(val)
-        m.context[m.id + "_callback"](val)
+    promise.resolve = sub(value)
+        m.context[m.id + "_callback"](value)
         m.complete = true
     end sub
     return promise
 end function
 
-function createOnAnimationCompletePromise(animation as object, startAnimation = true as boolean, unparent = true as boolean) as object
+function createOnAnimationCompletePromise(animation as object, startAnimation = true as boolean, unparentNode = true as boolean) as object
     promise = __createPromiseFromNode(animation, "state")
     promise.shouldSendCallback = function(node) as Boolean
         if node.state = "stopped" then return true
         return false
     end function
-    promise.unparent = true
+    promise.unparent = unparentNode
 
     if startAnimation then animation.control = "start"
     return promise
@@ -43,6 +45,7 @@ function __createPromiseFromNode(node as object, signalField as string) as objec
     promise = __createPromise()
     node.id = promise.id
     node.observeFieldScoped(signalField, "__nodePromiseResolvedHandler")
+    promise.signalField = signalField
     promise.node = node
     return promise
 end function
@@ -50,9 +53,18 @@ end function
 function __createPromise() as object
     id = StrI(rnd(2147483647), 36)
     promise = {
-        "then": function(callback as function)
+        then: sub(callback as function)
             m.context[m.id + "_callback"] = callback
-        end function
+        end sub
+
+        dispose: sub()
+            if m.complete = true then return
+            m.context.delete(m.id + "_callback")
+            m.context.delete(m.id)
+            m.node.unobserveFieldScoped(m.signalField)
+            m.delete("context")
+            m.delete("node")
+        end sub
     }
     promise.context = m
     promise.id = id
@@ -75,18 +87,20 @@ sub __nodePromiseResolvedHandler(e as object)
     if isFunc(promise.shouldSendCallback) and promise.shouldSendCallback(node) = false then return
 
     callback = promise.context[id + "_callback"]
-    if isFunc(callback) then callback(promise.node)
-
-    promise.complete = true
+    if isFunc(callback) then
+        if promise.returnSignalFieldValue = true then
+            callback(promise.node[promise.signalField])
+        else
+            callback(promise.node)
+        end if
+    end if
 
     'clean up properly properly
     if promise.suppressDispose = invalid then
-        node.unobserveFieldScoped(signalField)
-        promise.delete("context")
-        promise.delete("node")
-        m.delete(id + "_callback")
-        m.delete(id)
+        promise.dispose()
     end if
+
+    promise.complete = true
 
     if promise.unparent = true then
         parent = node.getParent()
