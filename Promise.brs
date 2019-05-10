@@ -1,18 +1,16 @@
-function createTaskPromise(taskName as string, returnSignalFieldValue = true as boolean, fields = invalid as object, signalField = "output" as string) as object
+function createTaskPromise(taskName as string, fields = invalid as object, returnSignalFieldValue = false as boolean, signalField = "output" as string) as object
     task = CreateObject("roSGNode", taskName)
     if fields <> invalid then task.setFields(fields)
-    promise = __createPromiseFromNode(task, signalField)
-    promise.returnSignalFieldValue = returnSignalFieldValue
+    promise = __createPromiseFromNode(task, signalField, returnSignalFieldValue)
     task.control = "run"
     return promise
 end function
 
-function createObservablePromise(signalFieldType = "assocarray" as string, returnSignalFieldValue = true as boolean, fields = invalid as object, signalField = "output" as string) as object
+function createObservablePromise(signalFieldType = "assocarray" as string, fields = invalid as object, returnSignalFieldValue = false as boolean, signalField = "output" as string) as object
     node = CreateObject("roSGNode", "Node")
     if fields <> invalid then node.addFields(fields)
     node.addField(signalField, signalFieldType, false)
-    promise = __createPromiseFromNode(node, signalField)
-    promise.returnSignalFieldValue = returnSignalFieldValue
+    promise = __createPromiseFromNode(node, signalField, returnSignalFieldValue)
     return promise
 end function
 
@@ -41,12 +39,13 @@ end function
 '---------------------------------------------------------------------
 ' Everything below here is private and should not be called directly.
 '---------------------------------------------------------------------
-function __createPromiseFromNode(node as object, signalField as string) as object
+function __createPromiseFromNode(node as object, signalField as string, returnSignalFieldValue = false as boolean) as object
     promise = __createPromise()
     node.id = promise.id
     node.observeFieldScoped(signalField, "__nodePromiseResolvedHandler")
     promise.signalField = signalField
     promise.node = node
+    promise.returnSignalFieldValue = returnSignalFieldValue
     return promise
 end function
 
