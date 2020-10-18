@@ -23,7 +23,6 @@
     "type": "git",
     "url": "git+https://github.com/rokucommunity/roku-promise.git"
   },
-
   "bugs": {
     "url": "https://github.com/rokucommunity/roku-promise/issues"
   },
