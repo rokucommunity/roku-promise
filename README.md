@@ -1,9 +1,19 @@
 # Roku-Promise
 A Promise-like implementation for BrightScript/Roku
 
+![build](https://github.com/rokucommunity/roku-promise/workflows/build/badge.svg)
+
 The benefit of this library is that it keeps your task-invocation and your task-result-handling code 
 all together in one place instead of littering your code with observer handlers that make code
 hard to follow.
+
+## Installation
+### Using ropm
+```bash
+ropm install roku-promise
+```
+### Manually
+Copy `source/Promise.brs` into your project `source/` folder
 
 ## Basic Usage
 

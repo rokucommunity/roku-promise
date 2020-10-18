@@ -1,28 +1,31 @@
 {
-  "name": "@rokucommunity/roku-promise",
+  "name": "roku-promise",
   "version": "0.1.0",
+  "author": "briandunnington",
+  "license": "MIT",
   "description": "A Promise-like implementation for BrightScript/Roku",
-  "main": "index.js",
+  "scripts": {
+    "validate": "bsc --create-package=false --copy-to-staging=false"
+  },
+  "devDependencies": {
+    "brighterscript": "^0.16.8"
+  },
+  "files": [
+    "source/**/*"
+  ],
   "keywords": [
     "ropm",
     "roku",
     "brightscript",
     "promise"
   ],
-  "scripts": {
-    "validate": "bsc --create-package=false --copy-to-staging=false" 
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rokucommunity/roku-promise.git"
   },
-  "author": "briandunnington",
-  "license": "MIT",
+
   "bugs": {
     "url": "https://github.com/rokucommunity/roku-promise/issues"
   },
-  "homepage": "https://github.com/rokucommunity/roku-promise#readme",
-  "devDependencies": {
-    "brighterscript": "^0.16.8"
-  }
+  "homepage": "https://github.com/rokucommunity/roku-promise#readme"
 }
