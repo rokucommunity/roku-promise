@@ -1,0 +1,13 @@
+name: validate
+on: [push, pull_request]
+
+jobs:
+  ci:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@master
+        with:
+          node-version: "10.19.0"
+      - run: npm ci
+      - run: npm run validate
