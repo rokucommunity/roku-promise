@@ -1,8 +1,18 @@
 function createTaskPromise(taskName as string, fields = invalid as object, returnSignalFieldValue = false as boolean, signalField = "output" as string) as object
     task = CreateObject("roSGNode", taskName)
     if fields <> invalid then task.setFields(fields)
-    promise = __createPromiseFromNode(task, signalField, returnSignalFieldValue)
+    promise = createPromiseFromNode(task, signalField, returnSignalFieldValue)
     task.control = "run"
+    return promise
+end function
+
+function createResolvedPromise(value as dynamic, delay = 0.01 as float) as dynamic
+    timer = CreateObject("roSGNode", "Timer")
+    timer.duration = delay
+    timer.repeat = false
+    promise = createPromiseFromNode(timer, "fire", false)
+    promise.value = value
+    timer.control = "start"
     return promise
 end function
 
@@ -10,7 +20,7 @@ function createObservablePromise(signalFieldType = "assocarray" as string, field
     node = CreateObject("roSGNode", "Node")
     if fields <> invalid then node.addFields(fields)
     node.addField(signalField, signalFieldType, false)
-    promise = __createPromiseFromNode(node, signalField, returnSignalFieldValue)
+    promise = createPromiseFromNode(node, signalField, returnSignalFieldValue)
     return promise
 end function
 
@@ -24,7 +34,7 @@ function createManualPromise() as object
 end function
 
 function createOnAnimationCompletePromise(animation as object, startAnimation = true as boolean, unparentNode = true as boolean) as object
-    promise = __createPromiseFromNode(animation, "state")
+    promise = createPromiseFromNode(animation, "state")
     promise.shouldSendCallback = function(node) as Boolean
         if node.state = "stopped" then return true
         return false
@@ -35,11 +45,7 @@ function createOnAnimationCompletePromise(animation as object, startAnimation = 
     return promise
 end function
 
-
-'---------------------------------------------------------------------
-' Everything below here is private and should not be called directly.
-'---------------------------------------------------------------------
-function __createPromiseFromNode(node as object, signalField as string, returnSignalFieldValue = false as boolean) as object
+function createPromiseFromNode(node as object, signalField as string, returnSignalFieldValue = false as boolean) as object
     promise = __createPromise()
     node.id = promise.id
     node.observeFieldScoped(signalField, "__nodePromiseResolvedHandler")
@@ -49,6 +55,10 @@ function __createPromiseFromNode(node as object, signalField as string, returnSi
     return promise
 end function
 
+'---------------------------------------------------------------------
+' Everything below here is private and should not be called directly.
+'---------------------------------------------------------------------
+
 function __createPromise() as object
     id = StrI(rnd(2147483647), 36)
     promise = {
@@ -57,12 +67,14 @@ function __createPromise() as object
         end sub
 
         dispose: sub()
-            if m.complete = true then return
+            if not m.doesExist("context") then return ' already disposed
             m.context.delete(m.id + "_callback")
             m.context.delete(m.id)
-            m.node.unobserveFieldScoped(m.signalField)
             m.delete("context")
-            m.delete("node")
+            if m.doesExist("node")
+                m.node.unobserveFieldScoped(m.signalField)
+                m.delete("node")
+            end if
         end sub
     }
     promise.context = m
@@ -73,7 +85,6 @@ function __createPromise() as object
 end function
 
 sub __nodePromiseResolvedHandler(e as object)
-    signalField = e.getField()
     node = e.getRoSGNode()
     id = node.id
     promise = m[id]
@@ -89,6 +100,9 @@ sub __nodePromiseResolvedHandler(e as object)
     if isFunc(callback) then
         if promise.returnSignalFieldValue = true then
             callback(promise.node[promise.signalField])
+        else if promise.doesExist("value")
+            callback(promise.value)
+            promise.delete("value")
         else
             callback(promise.node)
         end if
