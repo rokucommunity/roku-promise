@@ -148,14 +148,14 @@ m.observedNode.output = someData
 Observe a Node field.
 
 ```vbscript
-function createPromiseFromNode(node as object, signalField as string, returnSignalFieldValue = false as boolean) as object
+function createPromiseFromNode(node as object, returnSignalFieldValue as boolean, signalField as string) as object
 ```
 
 Arguments:
 
 * `node` - the Node context
+* `returnSignalFieldValue` - return observed field value instead of the Node itself
 * `signalField` - observed field name
-* `returnSignalFieldValue` - (optional) return observed field value instead of the Node itself
 
 Usage:
 

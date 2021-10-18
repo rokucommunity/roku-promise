@@ -1,7 +1,7 @@
 function createTaskPromise(taskName as string, fields = invalid as object, returnSignalFieldValue = false as boolean, signalField = "output" as string) as object
     task = CreateObject("roSGNode", taskName)
     if fields <> invalid then task.setFields(fields)
-    promise = createPromiseFromNode(task, signalField, returnSignalFieldValue)
+    promise = createPromiseFromNode(task, returnSignalFieldValue, signalField)
     task.control = "run"
     return promise
 end function
@@ -10,7 +10,7 @@ function createResolvedPromise(value as dynamic, delay = 0.01 as float) as dynam
     timer = CreateObject("roSGNode", "Timer")
     timer.duration = delay
     timer.repeat = false
-    promise = createPromiseFromNode(timer, "fire", false)
+    promise = createPromiseFromNode(timer, false, "fire")
     promise.value = value
     timer.control = "start"
     return promise
@@ -20,7 +20,7 @@ function createObservablePromise(signalFieldType = "assocarray" as string, field
     node = CreateObject("roSGNode", "Node")
     if fields <> invalid then node.addFields(fields)
     node.addField(signalField, signalFieldType, false)
-    promise = createPromiseFromNode(node, signalField, returnSignalFieldValue)
+    promise = createPromiseFromNode(node, returnSignalFieldValue, signalField)
     return promise
 end function
 
@@ -34,7 +34,7 @@ function createManualPromise() as object
 end function
 
 function createOnAnimationCompletePromise(animation as object, startAnimation = true as boolean, unparentNode = true as boolean) as object
-    promise = createPromiseFromNode(animation, "state")
+    promise = createPromiseFromNode(animation, false, "state")
     promise.shouldSendCallback = function(node) as Boolean
         if node.state = "stopped" then return true
         return false
@@ -45,7 +45,7 @@ function createOnAnimationCompletePromise(animation as object, startAnimation = 
     return promise
 end function
 
-function createPromiseFromNode(node as object, signalField as string, returnSignalFieldValue = false as boolean) as object
+function createPromiseFromNode(node as object, returnSignalFieldValue as boolean, signalField as string) as object
     promise = __createPromise()
     node.id = promise.id
     node.observeFieldScoped(signalField, "__nodePromiseResolvedHandler")
