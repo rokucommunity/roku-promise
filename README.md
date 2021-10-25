@@ -1,41 +1,199 @@
 # Roku-Promise
+
 A Promise-like implementation for BrightScript/Roku
 
 ![build](https://github.com/rokucommunity/roku-promise/workflows/build/badge.svg)
 [![NPM Version](https://badge.fury.io/js/roku-promise.svg?style=flat)](https://npmjs.org/package/roku-promise)
 
-The benefit of this library is that it keeps your task-invocation and your task-result-handling code 
+This library helps making asynchronous logic simpler, by keeping invocation and result handling code
 all together in one place instead of littering your code with observer handlers that make code
 hard to follow.
 
+**Disclaimer:** this only superficially looks like the JavaScript Promise API and is really only
+a tool to observe Nodes and handle changes asynchronously.
+
 ## Installation
+
 ### Using ropm
+
 ```bash
 ropm install roku-promise
 ```
+
 ### Manually
+
 Copy `source/Promise.brs` into your project `source/` folder
 
 ## Basic Usage
 
-    createTaskPromise("TaskName", {
-        input1: "some value",
-        input2: 123
-    }).then(sub(task)
-        results = task.output
-        ' do other stuff here with the results.
-        ' m is the original context from the caller
-        m.label.text = results.text
-    end sub)
+```vbscript
+createTaskPromise("TaskName", {
+    input1: "some value",
+    input2: 123
+}).then(sub(task)
+    results = task.output
+    ' do other stuff here with the results.
+    ' m is the original context from the caller
+    m.label.text = results.text
+end sub)
+```
 
 Behind the scenes, this is what happens:
+
 * A new Task object is created
 * Any properties provided are used to set the matching task fields
 * A dynamic observer is set on the signal field
-* When the task is complete, it sets the signal field, which triggers the observer
 * The observer calls the `then` delegate, restoring the original scope/context
 
-## Important Notes
+## API
+
+### Task Promise
+
+Create and run a task.
+
+```vbscript
+function createTaskPromise(taskName as string, fields = invalid as object, returnSignalFieldValue = false as boolean, signalField = "output" as string) as object
+```
+
+Arguments:
+
+* `taskName` - Task Node to create
+* `fields` - (optional) fields to set on the task
+* `returnSignalFieldValue` - (optional) return observed field value instead of the task itself
+* `signalField` - (optional) observed field name
+
+### Animation Complete Promise
+
+Wait for an animation to complete.
+
+```vbscript
+function createOnAnimationCompletePromise(animation as object, startAnimation = true as boolean, unparentNode = true as boolean) as object
+```
+
+Arguments:
+
+* `animation` - an Animation node to observe
+* `startAnimation` - (optional) start the animation
+* `unparentNode` - (optional) detach the animation node when complete, if parented
+
+Usage:
+
+```vbscript
+animation = m.top.animationName
+createOnAnimationCompletePromise(animation, true, false).then(sub()
+    ' animation completed!
+    ' m is the original context from the caller
+end sub)
+```
+
+### Resolved Promise
+
+To return a deferred value using a Timer node.
+
+```vbscript
+function createResolvedPromise(value as dynamic, delay = 0.01 as float) as object
+```
+
+Arguments:
+
+* `value` - payload of the Promise
+* `delay` - (optional) in seconds
+
+Usage:
+
+```vbscript
+createResolvedPromise(someData).then(sub(value)
+    ' a few ms later, do something with the `value`
+    ' m is the original context from the caller
+end sub)
+```
+
+### Observable Promise
+
+Create a Promise resolved by setting a Node field.
+
+```vbscript
+function createObservablePromise(signalFieldType = "assocarray" as string, fields = invalid as object, returnSignalFieldValue = false as boolean, signalField = "output" as string) as object
+```
+
+Arguments:
+
+* `signalFieldType` - (optional) type of the field
+* `field` - (optional) initial field values to set on the Node
+* `returnSignalFieldValue` - (optional) return observed field value instead of the Node itself
+* `signalField` - (optional) observed field name
+
+Usage:
+
+```vbscript
+' setup
+function create()
+    promise = createObservablePromise()
+    m.observedNode = promise.node
+    return promise
+end function
+
+' caller
+create().then(sub(node)
+    ' do something with `node.output`
+    ' m is the original context from the caller
+end sub)
+
+' later
+m.observedNode.output = someData
+```
+
+### Promise from Node
+
+Observe a Node field.
+
+```vbscript
+function createPromiseFromNode(node as object, returnSignalFieldValue as boolean, signalField as string) as object
+```
+
+Arguments:
+
+* `node` - the Node context
+* `returnSignalFieldValue` - return observed field value instead of the Node itself
+* `signalField` - observed field name
+
+Usage:
+
+```vbscript
+createPromiseFromNode(targetNode, "fieldName").then(sub(node)
+    ' do something with `node.fieldName`
+    ' m is the original context from the caller
+end sub)
+```
+
+### Manual Promise
+
+Create a Promise resolved by calling `resolve` on it (no Node involved).
+
+```vbscript
+function createManualPromise() as object
+```
+
+Usage:
+
+```vbscript
+' setup
+function create()
+    m.promise = createManualPromise()
+    return m.promise
+end function
+
+' caller
+create().then(sub(value)
+    ' do something with `value`
+    ' m is the original context from the caller
+end sub)
+
+' later
+m.promise.resolve(someData)
+```
+
+## Features and limitations
 
 * The important bit is that, in the `then` delegate, the context is the same as the original caller.
 So if you call this from a Scene Graph component, `m` in the `then` delegate is the same `m` as the component.
@@ -44,146 +202,158 @@ This allows you to easily use the results of the task by setting UI fields.
 * By the same token, since BrightScript does not have "capturing" closures, function-scoped variables are *not*
 available in the 'then` callback. Consider:
 
-        sub SomeFunction(val1, val2)
-            anotherVal = val1 + val2
-            createTaskPromise("TaskName", {}).then(sub(task)
-                ' m is available
-                ' task is available
-                ' val1, val2, and anotherVal are *not* available (they have different scope) 
-            end sub)
-        end sub
+    ```vbscript
+    sub SomeFunction(val1, val2)
+        anotherVal = val1 + val2
+        createTaskPromise("TaskName", {}).then(sub(task)
+            ' m is available
+            ' task is available
+            ' val1, val2, and anotherVal are *not* available (they have different scope)
+        end sub)
+    end sub
+    ```
 
     One work-around if you need to pass additional context to the callback is to pass the data as fields to the task:
 
-        sub SomeFunction(val1, val2)
-            anotherVal = val1 + val2
-            createTaskPromise("TaskName", {
-                val1: val1,
-                val2: val2,
-                anotherVal: anotherVal
-            }).then(sub(task)
-                ' m is available
-                ' task is available
-                ' task.val1, task.val2, task.anotherVal are now all available
-            end sub)
-        end sub
-
-* By default, the signal field on the Task is `output` but you can pass an optional third parameter
-with the name of a different field to observe for results.
-
+    ```vbscript
+    sub SomeFunction(val1, val2)
+        anotherVal = val1 + val2
         createTaskPromise("TaskName", {
-            input1: "some value",
-            input2: 123
-        }, "items").then(sub(task)
-            items = task.items
+            val1: val1,
+            val2: val2,
+            anotherVal: anotherVal
+        }).then(sub(task)
+            ' m is available
+            ' task is available
+            ' task.val1, task.val2, task.anotherVal are now all available
         end sub)
+    end sub
+    ```
 
-* This implementation is somewhat opinionated and *does not* support chained promises. So you *cannot* do this:
+* This implementation *does not* support chained promises. So you *cannot* do this:
 
-        createTaskPromise("TaskName", {}).then(callback).then(callback).then(callback)
+    ```vbscript
+    ' NOT valid
+    createTaskPromise("TaskName", {}).then(callback).then(callback).then(callback)
+    ```
 
-    This is by design because it is rarely a good pattern to do a bunch of different tasks in serial like that.
-Instead, it is usually better to have one Task that performs all of the necessary actions and returns
-the final result to avoid multiple rendezvous. That said, if you do need to react to the results of a task with another task call, you can nest promise calls like this:
+    If you do need to react to the results of a task with another task call, you can nest promise calls like this:
 
-        createTaskPromise("TaskName", {}).then(sub(task)
-            results = task.output
-            createTaskPromise("AnotherTask", {}).then(sub(task)
-                otherResults = task.output
-                m.label.text = otherResults.text
-            end sub)
+    ```vbscript
+    createTaskPromise("TaskName", {}).then(sub(task)
+        results = task.output
+        createTaskPromise("AnotherTask", {}).then(sub(task)
+            otherResults = task.output
+            m.label.text = otherResults.text
         end sub)
+    end sub)
+    ```
 
-## Advanced Usage
+* This implementation *does not* support multiple observers. So you *cannot* do this:
+
+    ```vbscript
+    ' NOT valid
+    promise = createTaskPromise("TaskName", {})
+    promise.then(callback1)
+    promise.then(callback2) ' only last callback gets called
+    ```
+
+* This implementation *does not* support late observers. So you *cannot* do this:
+
+    ```vbscript
+    ' NOT valid
+    promise = createManualPromise()
+    promise.resolve(value)
+    promise.then(callback) ' already resolved - won't be called
+    ```
+
+## Cook book
 
 Although the most common use case is for spinning up, observing, and processing results from transient tasks, the
 library can be used in some other more advanced scenarios as well.
 
-### Saving Promise References
+### Accessing the underlying node
 
-`createTaskPromise` returns the Promise object, so you dont have to call the `then` function immediately.
-It is not usually necessary, but does allow for some advanced scenarios:
+Node associated with a Promise can be accessed using their `.node` field.
 
-        promise = createTaskPromise("TaskName", {
-            input1: "some value",
-            input2: 123
-        })
-        '...do some other stuff with the promise
-        promise.then(sub(task)
-            results = task.output
-        end sub)
+```vbscript
+promise = createResolvedPromise()
+timer = promise.node
+```
 
-One use case for this is to save a reference to the promise in a lookup dictionary so that you can track multiple
-in-flight promises.
+### Cancelling a Promise
+
+Promises can be cancelled by calling their `.dispose()` method - associated Node will be unobserved and callback deleted.
+
+```vbscript
+' setup
+m.promise = createTaskPromise("TaskName", {})
+
+' cancellation
+if m.promise.node <> invalid
+    m.promise.node.control = "STOP"
+    m.promise.dispose()
+end if
+```
 
 ### Long-lived Tasks
 
 `createTaskPromise` creates a new Task each time it is called. For most uses, that is the desired behavior as it
 is simply providing syntactic sugar over the create/observer/react pattern usually used with tasks.
-Some actions are more appropriate for long-lived tasks however, where the task is created only once and exists
-for the lifetime of the app. In these cases, the task usually has a `while` loop that is processing incoming events
-on an `roMessagePort`. One strategy for returning the results is to use `node` type fields on the task: the calling
-thread can create the node and observe a field that will hold the results, then that entire node is passed to the task.
-When the task has processed the request, it sets the node's field which trigger the observer back in the calling thread.
 
-The Promise library supports this pattern with the `createObservablePromise` method. You specify the name of your
-signaling field (and optionally, any other fields that you would like to add to the node) and the library will handle
-wiring up the promise handler to your node. Pass the node to your task, have the task set the signal field when it
-is done, and your `then` function will automatically get invoked. This also implicitly solves the issue of tracking
-which response from the long-lived task goes with with request - it 'just works'.
+You may want to (re)use a long-lived task. Those tasks usually has a `while` loop that is processing incoming events
+on an `roMessagePort`.
 
-    p = createObservablePromise("result", {itemId: 1234})
-    longLivedTask = m.global.longLivedTask
-    longLivedTask.get = promise.node
-    p.then(sub(node)
-        result = node.result
-        '...do stuff with the result
-    end sub)
+The Promise library supports this pattern with the `createObservablePromise` method which should be used each time you
+need to run a job. The Promise's Node can be passed to the task to provide configuration and return the result.
+
+```vbscript
+' create a receiver Promise with specific result type ("node", "array"...) and payload
+promise = createObservablePromise("assocarray", { itemId: 1234 })
+promise.then(sub(node)
+    result = node.output
+    '...do stuff with the result
+end sub)
+
+' trigger a job in long-lived task
+m.global.longLivedTask.get = promise.node
+```
 
 And then in your task:
 
-    while true
-        msg = wait(0, m.port)
-        if msg <> invalid
-            msgType = type(msg)
-            if msgType = "roSGNodeEvent"
-                field = msg.getField()
-                observer = msg.getData()
-                if field = "get"
-                    '...do some stuff (make network calls, create ContentNodes, etc)
-                    result = DoStuff(observer.itemId)
-                    observer.result = result
-                end if
+```vbscript
+while true
+    msg = wait(0, m.port)
+    if msg <> invalid
+        msgType = type(msg)
+        if msgType = "roSGNodeEvent"
+            field = msg.getField()
+            observer = msg.getData()
+            if field = "get"
+                '...do some stuff (make network calls, create ContentNodes, etc)
+                result = DoStuff(observer.itemId)
+                observer.output = result
             end if
         end if
-    end while
+    end if
+end while
+```
 
-### Manual Promises
+### Repeated resolution
 
-Both `createTaskPromise` and `createObservablePromise` are automatically resolved when their signaling field is set, but
-you can also create a 'manual' promise using `createManualPromise`. This will return a promise with a `resolve`
-method that you can call at any later time to trigger the `then` callback. A contrived example:
+Usually, Promises can only be resolved once.
 
-    p = createManualPromise()
-    p.then(sub(val)
-        ?"manual promise resolved with val", val
-    end sub)
+With this library you can set the `suppressDispose` flag (to a value `<> invalid`),
+so the observers won't be automatically disposed and fire repeatedly.
 
-    '...do a bunch of other stuff in your app
+```vbscript
+' setup
+m.observer = createPromiseFromNode(targetNode, "fieldName")
+m.observer.suppressDispose = true
+m.observer.then(sub(node)
+    ' called on every change
+end sub)
 
-    ' then, sometime later (perhaps in response to user input, timer, etc)...
-    p.resolve(5)
-
-*(Note: I am not entirely sure of the usefulness of this functionality, but it was easy to include and thought
-it might be interesting to see what use cases other folks came up with for it.)*
-
-### Build-Your Own
-
-Lastly, you can use the 'private' `__createPromiseFromNode` or `__createPromise` methods to build your own custom types
-of promises on top of the core built-in functionality. Some possible ideas (not all of which are probably *good* ideas):
-
-* Add `catch`-like semantics for handling errors from tasks by observing an additional error signal field
-* Wrap a timer in a promise so that your callback is triggered after a time period
-* Build a `whenAll` function to wait for multiple promises
-* Create a `promisify` method to make anything into a promise
-* Add advanced promise functionality like `join`, etc
+' cleanup
+m.observer.dispose()
+```
