@@ -9,7 +9,7 @@
     "validate": "bsc --create-package=false --copy-to-staging=false"
   },
   "devDependencies": {
-    "brighterscript": "^0.16.8"
+    "brighterscript": "^0.41.2"
   },
   "files": [
     "source/**/*"
