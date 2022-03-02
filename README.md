@@ -2,8 +2,11 @@
 
 A Promise-like implementation for BrightScript/Roku
 
-![build](https://github.com/rokucommunity/roku-promise/workflows/build/badge.svg)
-[![NPM Version](https://badge.fury.io/js/roku-promise.svg?style=flat)](https://npmjs.org/package/roku-promise)
+[![build status](https://img.shields.io/github/workflow/status/rokucommunity/roku-promise/build.svg?logo=github)](https://github.com/rokucommunity/roku-promise/actions?query=workflow%3Abuild)
+[![monthly downloads](https://img.shields.io/npm/dm/roku-promise.svg?sanitize=true&logo=npm&logoColor=)](https://npmcharts.com/compare/roku-promise?minimal=true)
+[![npm version](https://img.shields.io/npm/v/roku-promise.svg?logo=npm)](https://www.npmjs.com/package/roku-promise)
+[![license](https://img.shields.io/github/license/rokucommunity/roku-promise.svg)](LICENSE)
+[![Slack](https://img.shields.io/badge/Slack-RokuCommunity-4A154B?logo=slack)](https://join.slack.com/t/rokudevelopers/shared_invite/zt-4vw7rg6v-NH46oY7hTktpRIBM_zGvwA)
 
 This library helps making asynchronous logic simpler, by keeping invocation and result handling code
 all together in one place instead of littering your code with observer handlers that make code
