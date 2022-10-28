@@ -1,4 +1,4 @@
-function createTaskPromise(taskName as string, fields = invalid as object, returnSignalFieldValue = false as boolean, signalField = "output" as string) as object
+function createTaskPromise(taskName as string, fields = invalid as dynamic, returnSignalFieldValue = false as boolean, signalField = "output" as string) as object
     task = CreateObject("roSGNode", taskName)
     if fields <> invalid then task.setFields(fields)
     promise = createPromiseFromNode(task, returnSignalFieldValue, signalField)
@@ -16,7 +16,7 @@ function createResolvedPromise(value as dynamic, delay = 0.01 as float) as dynam
     return promise
 end function
 
-function createObservablePromise(signalFieldType = "assocarray" as string, fields = invalid as object, returnSignalFieldValue = false as boolean, signalField = "output" as string) as object
+function createObservablePromise(signalFieldType = "assocarray" as string, fields = invalid as dynamic, returnSignalFieldValue = false as boolean, signalField = "output" as string) as object
     node = CreateObject("roSGNode", "Node")
     if fields <> invalid then node.addFields(fields)
     node.addField(signalField, signalFieldType, false)
