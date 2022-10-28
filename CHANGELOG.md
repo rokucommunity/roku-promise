@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.2.1](https://github.com/rokucommunity/roku-promise/compare/v0.2.0...0.2.1) - 2022-10-28
+### Fixed
+ - Set type to `dynamic` for arguments that have an invalid default value ([#15](https://github.com/rokucommunity/roku-promise/pull/15))
+
+
+
 ## [v0.2.0](https://github.com/rokucommunity/roku-promise/compare/v0.1.0...v0.2.0) - 2021-10-25
 ### Added
  - new function `createResolvedPromise()` ([#9](https://github.com/rokucommunity/roku-promise/pull/9))
