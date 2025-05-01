@@ -6,7 +6,8 @@
   "description": "A Promise-like implementation for BrightScript/Roku",
   "scripts": {
     "preversion": "npm run validate",
-    "validate": "bsc --create-package=false --copy-to-staging=false"
+    "validate": "bsc --create-package=false --copy-to-staging=false",
+    "package": "npm run build && npm pack"
   },
   "devDependencies": {
     "brighterscript": "^0.41.2"
