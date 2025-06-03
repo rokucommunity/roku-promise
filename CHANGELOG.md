@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.2.2](https://github.com/rokucommunity/roku-promise/compare/0.2.1...v0.2.2) - 2025-06-03
+### Added
+ - Add "don't use this project" error at the top ([#20](https://github.com/rokucommunity/roku-promise/pull/20))
+ - added [brighterscript@0.69.9](https://github.com/rokucommunity/brighterscript)
+### Changed
+ - Migrate to Shared CI ([#21](https://github.com/rokucommunity/roku-promise/pull/21))
+
+
+
 ## [0.2.1](https://github.com/rokucommunity/roku-promise/compare/v0.2.0...0.2.1) - 2022-10-28
 ### Fixed
  - Set type to `dynamic` for arguments that have an invalid default value ([#15](https://github.com/rokucommunity/roku-promise/pull/15))

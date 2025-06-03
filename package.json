@@ -1,6 +1,6 @@
 {
   "name": "roku-promise",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": "briandunnington",
   "license": "MIT",
   "description": "A Promise-like implementation for BrightScript/Roku",
@@ -10,7 +10,7 @@
     "package": "npm run build && npm pack"
   },
   "devDependencies": {
-    "brighterscript": "^0.41.2"
+    "brighterscript": "^0.69.9"
   },
   "files": [
     "source/**/*"
