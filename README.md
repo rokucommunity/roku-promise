@@ -1,7 +1,7 @@
 # Roku-Promise
 
 
-[![build status](https://img.shields.io/github/workflow/status/rokucommunity/roku-promise/build.svg?logo=github)](https://github.com/rokucommunity/roku-promise/actions?query=workflow%3Abuild)
+[![build status](https://img.shields.io/github/actions/workflow/status/rokucommunity/roku-promise/build.yml?logo=github&branch=master)](https://github.com/rokucommunity/roku-promise/actions?query=branch%3Amaster+workflow%3Abuild)
 [![monthly downloads](https://img.shields.io/npm/dm/roku-promise.svg?sanitize=true&logo=npm&logoColor=)](https://npmcharts.com/compare/roku-promise?minimal=true)
 [![npm version](https://img.shields.io/npm/v/roku-promise.svg?logo=npm)](https://www.npmjs.com/package/roku-promise)
 [![license](https://img.shields.io/github/license/rokucommunity/roku-promise.svg)](LICENSE)
