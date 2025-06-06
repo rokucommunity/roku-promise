@@ -8,6 +8,6 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-node@master
         with:
-          node-version: "10.19.0"
+          node-version: "16.20.2"
       - run: npm ci
       - run: npm run validate
