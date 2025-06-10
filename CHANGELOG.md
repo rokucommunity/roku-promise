@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.2](https://github.com/rokucommunity/roku-promise/compare/0.2.1...v0.2.2) - 2025-06-03
 ### Changed
- - place a "don't use this project" message at top of readme ([#20](https://github.com/rokucommunity/roku-promise/pull/20))
- - fix broken build status badge ([#25](https://github.com/rokucommunity/roku-promise/pull/25))
+ - chore: place a "don't use this project" message at top of readme ([#20](https://github.com/rokucommunity/roku-promise/pull/20))
+ - chore: fix broken build status badge ([#25](https://github.com/rokucommunity/roku-promise/pull/25))
 
 
 
