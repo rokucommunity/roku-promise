@@ -8,7 +8,7 @@
 [![Slack](https://img.shields.io/badge/Slack-RokuCommunity-4A154B?logo=slack)](https://join.slack.com/t/rokudevelopers/shared_invite/zt-4vw7rg6v-NH46oY7hTktpRIBM_zGvwA)
 
 > [!CAUTION]
-> This is a legacy project which is not under active development. Use [@rokucommunity/promises](https://github.com/rokucommunity/promises) instead which provides a much more rhobust promise solution.
+> This is a legacy project which is not under active development. Use [@rokucommunity/promises](https://github.com/rokucommunity/promises) instead which provides a much more robust promise solution.
 
 This library helps making asynchronous logic simpler, by keeping invocation and result handling code
 all together in one place instead of littering your code with observer handlers that make code
@@ -31,7 +31,7 @@ Copy `source/Promise.brs` into your project `source/` folder
 
 ## Basic Usage
 
-```vbscript
+```brightscript
 createTaskPromise("TaskName", {
     input1: "some value",
     input2: 123
@@ -56,7 +56,7 @@ Behind the scenes, this is what happens:
 
 Create and run a task.
 
-```vbscript
+```brightscript
 function createTaskPromise(taskName as string, fields = invalid as object, returnSignalFieldValue = false as boolean, signalField = "output" as string) as object
 ```
 
@@ -71,7 +71,7 @@ Arguments:
 
 Wait for an animation to complete.
 
-```vbscript
+```brightscript
 function createOnAnimationCompletePromise(animation as object, startAnimation = true as boolean, unparentNode = true as boolean) as object
 ```
 
@@ -83,7 +83,7 @@ Arguments:
 
 Usage:
 
-```vbscript
+```brightscript
 animation = m.top.animationName
 createOnAnimationCompletePromise(animation, true, false).then(sub()
     ' animation completed!
@@ -95,7 +95,7 @@ end sub)
 
 To return a deferred value using a Timer node.
 
-```vbscript
+```brightscript
 function createResolvedPromise(value as dynamic, delay = 0.01 as float) as object
 ```
 
@@ -106,7 +106,7 @@ Arguments:
 
 Usage:
 
-```vbscript
+```brightscript
 createResolvedPromise(someData).then(sub(value)
     ' a few ms later, do something with the `value`
     ' m is the original context from the caller
@@ -117,7 +117,7 @@ end sub)
 
 Create a Promise resolved by setting a Node field.
 
-```vbscript
+```brightscript
 function createObservablePromise(signalFieldType = "assocarray" as string, fields = invalid as object, returnSignalFieldValue = false as boolean, signalField = "output" as string) as object
 ```
 
@@ -130,7 +130,7 @@ Arguments:
 
 Usage:
 
-```vbscript
+```brightscript
 ' setup
 function create()
     promise = createObservablePromise()
@@ -152,7 +152,7 @@ m.observedNode.output = someData
 
 Observe a Node field.
 
-```vbscript
+```brightscript
 function createPromiseFromNode(node as object, returnSignalFieldValue as boolean, signalField as string) as object
 ```
 
@@ -164,7 +164,7 @@ Arguments:
 
 Usage:
 
-```vbscript
+```brightscript
 createPromiseFromNode(targetNode, "fieldName").then(sub(node)
     ' do something with `node.fieldName`
     ' m is the original context from the caller
@@ -175,13 +175,13 @@ end sub)
 
 Create a Promise resolved by calling `resolve` on it (no Node involved).
 
-```vbscript
+```brightscript
 function createManualPromise() as object
 ```
 
 Usage:
 
-```vbscript
+```brightscript
 ' setup
 function create()
     m.promise = createManualPromise()
@@ -207,7 +207,7 @@ This allows you to easily use the results of the task by setting UI fields.
 * By the same token, since BrightScript does not have "capturing" closures, function-scoped variables are *not*
 available in the 'then` callback. Consider:
 
-    ```vbscript
+    ```brightscript
     sub SomeFunction(val1, val2)
         anotherVal = val1 + val2
         createTaskPromise("TaskName", {}).then(sub(task)
@@ -220,7 +220,7 @@ available in the 'then` callback. Consider:
 
     One work-around if you need to pass additional context to the callback is to pass the data as fields to the task:
 
-    ```vbscript
+    ```brightscript
     sub SomeFunction(val1, val2)
         anotherVal = val1 + val2
         createTaskPromise("TaskName", {
@@ -237,14 +237,14 @@ available in the 'then` callback. Consider:
 
 * This implementation *does not* support chained promises. So you *cannot* do this:
 
-    ```vbscript
+    ```brightscript
     ' NOT valid
     createTaskPromise("TaskName", {}).then(callback).then(callback).then(callback)
     ```
 
     If you do need to react to the results of a task with another task call, you can nest promise calls like this:
 
-    ```vbscript
+    ```brightscript
     createTaskPromise("TaskName", {}).then(sub(task)
         results = task.output
         createTaskPromise("AnotherTask", {}).then(sub(task)
@@ -256,7 +256,7 @@ available in the 'then` callback. Consider:
 
 * This implementation *does not* support multiple observers. So you *cannot* do this:
 
-    ```vbscript
+    ```brightscript
     ' NOT valid
     promise = createTaskPromise("TaskName", {})
     promise.then(callback1)
@@ -265,7 +265,7 @@ available in the 'then` callback. Consider:
 
 * This implementation *does not* support late observers. So you *cannot* do this:
 
-    ```vbscript
+    ```brightscript
     ' NOT valid
     promise = createManualPromise()
     promise.resolve(value)
@@ -281,7 +281,7 @@ library can be used in some other more advanced scenarios as well.
 
 Node associated with a Promise can be accessed using their `.node` field.
 
-```vbscript
+```brightscript
 promise = createResolvedPromise()
 timer = promise.node
 ```
@@ -290,7 +290,7 @@ timer = promise.node
 
 Promises can be cancelled by calling their `.dispose()` method - associated Node will be unobserved and callback deleted.
 
-```vbscript
+```brightscript
 ' setup
 m.promise = createTaskPromise("TaskName", {})
 
@@ -312,7 +312,7 @@ on an `roMessagePort`.
 The Promise library supports this pattern with the `createObservablePromise` method which should be used each time you
 need to run a job. The Promise's Node can be passed to the task to provide configuration and return the result.
 
-```vbscript
+```brightscript
 ' create a receiver Promise with specific result type ("node", "array"...) and payload
 promise = createObservablePromise("assocarray", { itemId: 1234 })
 promise.then(sub(node)
@@ -326,7 +326,7 @@ m.global.longLivedTask.get = promise.node
 
 And then in your task:
 
-```vbscript
+```brightscript
 while true
     msg = wait(0, m.port)
     if msg <> invalid
@@ -351,7 +351,7 @@ Usually, Promises can only be resolved once.
 With this library you can set the `suppressDispose` flag (to a value `<> invalid`),
 so the observers won't be automatically disposed and fire repeatedly.
 
-```vbscript
+```brightscript
 ' setup
 m.observer = createPromiseFromNode(targetNode, "fieldName")
 m.observer.suppressDispose = true
